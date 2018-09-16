@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
 
 import logging
-from typing import Tuple
 
 import json
 import re
 from urllib import parse as urlparse
 import requests
+
 from os.path import expanduser
 from getpass import getpass
 from configparser import ConfigParser
 from argparse import ArgumentParser
 
-import smtplib
-from os.path import basename
-from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
-import mimetypes
+from email.encoders import encode_base64
+import smtplib
 
 from ao3 import AO3
-
 
 
 def get_ebook(src_url: str, format: str = 'mobi') -> object:
@@ -36,7 +34,6 @@ def get_ebook(src_url: str, format: str = 'mobi') -> object:
 	work = api.work(id=workid)
 	logging.debug('Got API object')
 
-
 	# Now to get the download URL
 	workfilename = work.title
 	workfilename = re.sub(r"[^\w _-]+", '', workfilename)
@@ -51,21 +48,52 @@ def get_ebook(src_url: str, format: str = 'mobi') -> object:
 		work.author,
 		workid,
 		workfilename + '.' + format])
-	logging.info('Fetching from URL: %s' % dl_url)
+	logging.info('Fetching from URL: \"%s\"' % dl_url)
 
 	response = requests.get(dl_url)
 	contents = response.content
-	logging.info('Downloaded file from AO3')
+	print('Downloaded .%s file from AO3...' % format)
 
 	return contents
 
 
+def email_attachment(sender: str, destination: str, 
+		attachment: object, server: str, password: str) -> None:
+	# https://stackoverflow.com/a/3363538
 
-def email_attachment(sender: str, destination: str, attachment: object, server: str) -> None:
-	# TODO
-	# https://stackoverflow.com/a/3363254
-	logging.error('TODO')
+	logging.debug('Generating message header')
+	m = MIMEMultipart()
+	m['Subject'] = 'eBook from AO3'
+	m['From'] = sender
+	m['To'] = destination
 
+	logging.debug('Generating message attachment')
+	a = MIMEBase('application', 'x-mobipocket-ebook')
+	a.set_payload(attachment)
+	encode_base64(a)
+
+	logging.debug('Generating attachment header')
+	a.add_header('Content-Disposition', 'attachment; filename="ao3-ebook.mobi"')
+
+	logging.debug('Attaching to message')
+	m.attach(a)
+
+	logging.info('Connecting to SMTP server: %s' % server)
+	s = smtplib.SMTP_SSL(server, 465)
+	try:
+		s.login(sender, password)
+	except smtplib.SMTPAuthenticationError as auth_error:
+		logging.error(auth_error)
+		raise
+
+	logging.info('Setting email')
+	try:
+		s.sendmail(sender, destination, m.as_string())
+	except smtplib.SMTPException as smtp_error:
+		logging.error('Failed to send email')
+		raise
+	
+	print('Email sent!')
 
 
 def generate_config(dest: str) -> None:
@@ -75,41 +103,46 @@ def generate_config(dest: str) -> None:
 	out_dict = config['DEFAULT']
 
 	while True:
-		print('Email Address for Send-to-Kindle:')
+		print('Email Address for Send-to-Kindle: ', end='')
 		out_dict['kindle'] = input()
 
-		print('SMTP Server to send from:')
+		print('SMTP Server to send from: ', end='')
 		out_dict['smtp-server'] = input()
 
-		print('SMTP sender email:')
+		print('SMTP sender email: ', end='')
 		out_dict['smtp-sender'] = input()
 
-		print('Is this correct? (y/n):')
+		print('Store a password? Useful for ex. gmail app-specific passwords')
+		print('(WARNING: will be stored as plaintext, not reccomended for general passwords)')
+		print('(y/n): ', end='')
+		if input().lower().strip()[:1] == 'y':
+			print('SMTP Password: ', end='')
+			out_dict['smtp-password'] = input()
+
+		print('Is this correct?')
 		print('  Kindle email: %s' % out_dict['kindle'])
 		print('  SMTP: %s on %s' % (out_dict['smtp-server'], out_dict['smtp-sender']))
+		print('(y/n): ', end='')
 		if input().lower().strip()[:1] == 'y':
 			break
 
+	logging.debug('Writing config file to %s' % dest)
 	with open(dest, 'w') as cfgfile:
-		logging.debug('Writing config file to %s' % dest)
 		config.write(cfgfile)
-		logging.debug('Write complete')
+	logging.debug('Write complete')
 
 
-
-def read_config(dest: str) -> Tuple[str, str, str]:
+def read_config(dest: str) -> object:
 	cfgfile = ConfigParser()
 	logging.debug('Reading config file from %s' % dest)
 	cfgfile.read(dest)
 	logging.debug('Read complete')
-	return (cfgfile['DEFAULT']['kindle'], 
-		cfgfile['DEFAULT']['smtp-server'], 
-		cfgfile['DEFAULT']['smtp-sender'])
-
+	return cfgfile['DEFAULT']
 
 
 if __name__ == "__main__":
 	cfgfile_default = expanduser("~") + '/.config/ao3-kindle'
+
 	cli = ArgumentParser(
 		description='Upload ArchiveOfOurOwn (AO3) fanfics to an Amazon Kindle')
 	cli.add_argument('-c', dest='cfgfile', 
@@ -140,9 +173,13 @@ if __name__ == "__main__":
 	if args.configure:
 		generate_config(args.cfgfile)
 	else:
-		kindle, src_addr, src_server = read_config(args.cfgfile)
-
+		cfg = read_config(args.cfgfile)
 		attach = get_ebook(args.url)
+		if 'smtp-password' in cfg:
+			p = cfg['smtp-password']
+		else:
+			p = getpass('Password for \"%s\": ' % cfg['smtp-sender'])
 		email_attachment(
-			sender=src_addr, destination=kindle,
-			attachment=attach, server=src_server)
+			sender=cfg['smtp-sender'], destination=cfg['kindle'],
+			attachment=attach, server=cfg['smtp-server'],
+			password=p)
