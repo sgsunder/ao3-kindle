@@ -2,7 +2,7 @@
 
 ## Installation
 
-TODO
+`pip3 install ao3kindle`
 
 ## Configuration
 
@@ -33,4 +33,11 @@ optional arguments:
   --configure    (Re)Generate the Configuration File
   -v, --verbose  Show verbose info
   --debug        Show debug info
+```
+
+## Building
+
+```
+python3 setup.py sdist bdist_wheel
+twine upload dist/*
 ```

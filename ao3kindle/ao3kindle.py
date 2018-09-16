@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import logging
 
 import json
@@ -140,7 +138,7 @@ def read_config(dest: str) -> object:
 	return cfgfile['DEFAULT']
 
 
-if __name__ == "__main__":
+def main() -> None:
 	cfgfile_default = expanduser("~") + '/.config/ao3-kindle'
 
 	cli = ArgumentParser(
