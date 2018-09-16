@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ao3kindle",
-    version="0.1.0",
+    version="0.1.1",
     author="Shyam Sunder",
     author_email="sgsunder1@gmail.com",
     description="Upload AO3 fanfics to an Amazon Kindle",
