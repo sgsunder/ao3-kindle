@@ -1,19 +1,17 @@
 import logging
-
+import os.path
 import re
-from urllib import parse as urlparse
 import requests
-
-from os.path import expanduser
+import smtplib
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.encoders import encode_base64
+from urllib import parse as urlparse
 from getpass import getpass
 from configparser import ConfigParser
 from argparse import ArgumentParser
 
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.encoders import encode_base64
-import smtplib
-
+from appdirs import user_data_dir
 from ao3 import AO3
 
 
@@ -154,7 +152,10 @@ def read_config(dest: str) -> object:
 
 
 def main() -> None:
-    cfgfile_default = expanduser("~") + "/.config/ao3-kindle"
+    cfgfile_default = os.path.join(
+        user_data_dir(appname="ao3-kindle", appauthor=False, roaming=True),
+        "conf",
+    )
 
     cli = ArgumentParser(
         description="Upload ArchiveOfOurOwn (AO3) fanfics to an Amazon Kindle"
@@ -165,7 +166,8 @@ def main() -> None:
         dest="cfgfile",
         default=cfgfile_default,
         nargs="?",
-        help="Location of config file (default: %s)" % cfgfile_default,
+        help='Location of configuration file (default: "%s")'
+        % cfgfile_default,
     )
 
     cli2 = cli.add_mutually_exclusive_group(required=True)
@@ -173,7 +175,7 @@ def main() -> None:
         "--configure",
         action="store_true",
         dest="configure",
-        help="(Re)Generate the Configuration File",
+        help="(Re)generate the configuration File",
     )
     cli2.add_argument("url", nargs="?", help="AO3 Fanfic URL")
 
