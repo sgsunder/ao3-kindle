@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
 
 from ao3kindle import ao3kindle
+
 ao3kindle.main()

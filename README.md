@@ -10,9 +10,9 @@ To interactively generate a configuration, run `ao3-kindle --configure`
 
 Ensure that you have the sender email address
 [approved](https://www.amazon.com/gp/help/customer/display.html?nodeId=201974240)
-on your Amazon account. Gmail users may need to 
+on your Amazon account. Gmail users may need to
 [allow less secure apps](https://support.google.com/accounts/answer/6010255?hl=en)
-and/or 
+and/or
 [use an app password](https://support.google.com/accounts/answer/185833?hl=en)
 
 ## Help

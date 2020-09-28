@@ -1,11 +1,22 @@
 import setuptools
+import subprocess
+
+
+def get_git_version():
+    return subprocess.run(
+        ["git", "describe", "--abbrev=0"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="ao3kindle",
-    version="0.1.2",
+    version=get_git_version(),
     author="Shyam Sunder",
     author_email="sgsunder1@gmail.com",
     description="Upload AO3 fanfics to an Amazon Kindle",
@@ -13,11 +24,12 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/sgsunder/ao3-kindle",
     packages=setuptools.find_packages(),
-    scripts=['bin/ao3-kindle'],
+    scripts=["bin/ao3-kindle"],
     classifiers=[
         "Programming Language :: Python :: 3.5",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
         "Topic :: Utilities",
     ],
+    python_requires=">=3.5",
 )
