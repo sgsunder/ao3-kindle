@@ -14,6 +14,9 @@ def get_git_version():
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("requirements.txt", "r") as fh:
+    requirements = [line.strip() for line in fh.readlines()]
+
 setuptools.setup(
     name="ao3kindle",
     version=get_git_version(),
@@ -31,5 +34,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Topic :: Utilities",
     ],
+    install_requires=requirements,
     python_requires=">=3.5",
 )
