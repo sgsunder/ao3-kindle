@@ -22,7 +22,10 @@ def get_ebook(src_url: str, format: str = "mobi") -> object:
     # Start up the API
     api = AO3()
 
-    workid = src_url.split("/")[-1]
+    # workid = src_url.split("/")[-1]
+    workid = src_url.split('works/')[1]
+    workid = workid.split('/')[0]
+    
     assert int(workid)
     logging.debug("Post ID Number: %d" % int(workid))
 
@@ -40,8 +43,6 @@ def get_ebook(src_url: str, format: str = "mobi") -> object:
         [
             "https://archiveofourown.org",
             "downloads",
-            work.author[:2],
-            work.author,
             workid,
             workfilename + "." + format,
         ]
