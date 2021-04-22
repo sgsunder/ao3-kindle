@@ -7,6 +7,7 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.encoders import encode_base64
 from urllib import parse as urlparse
+from urllib import urlparse as urlparser
 from getpass import getpass
 from configparser import ConfigParser
 from argparse import ArgumentParser
@@ -23,9 +24,11 @@ def get_ebook(src_url: str, format: str = "mobi") -> object:
     api = AO3()
 
     # workid = src_url.split("/")[-1]
-    workid = src_url.split('works/')[1]
-    workid = workid.split('/')[0]
-    
+    workid = urlparser(src_url)
+    workid = workid.path
+    workid = workid.split('/')
+    workid = workid[2]
+
     assert int(workid)
     logging.debug("Post ID Number: %d" % int(workid))
 
