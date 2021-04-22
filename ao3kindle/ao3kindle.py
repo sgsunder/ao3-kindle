@@ -22,10 +22,10 @@ def get_ebook(src_url: str, format: str = "mobi") -> object:
     # Start up the API
     api = AO3()
 
-    # workid = src_url.split("/")[-1]
-    workid = src_url.split('works/')[1]
-    workid = workid.split('/')[0]
-    
+    # Parse the AO3 work url to get work id
+    workid = urlparse.urlparse(src_url)
+    workid = workid.path.split('/')[2]
+
     assert int(workid)
     logging.debug("Post ID Number: %d" % int(workid))
 
